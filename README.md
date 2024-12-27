@@ -35,8 +35,8 @@ This project implements a lightweight DNS server that runs on the Raspberry Pi P
 
 1. **Clone or Download the Repository**:
    ```bash
-   git clone https://github.com/your-repo/dns-server.git
-   cd dns-server
+   git clone https://github.com/Night-Traders-Dev/pico_dns.git
+   cd pico_dns
    ```
 
 2. **Transfer Files to Pico W**:
