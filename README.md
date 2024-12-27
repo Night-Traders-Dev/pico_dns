@@ -16,6 +16,9 @@ This project implements a lightweight DNS server that runs on the Raspberry Pi P
 - **Caching**:
   - Stores recently resolved domains to improve response time for repeated queries.
   - Includes a Time-to-Live (TTL) mechanism for cache expiration.
+  - Supports persistent caching via `dns_cache.json`.
+- **Cache Management**:
+  - View, clear, or reset the cache using CLI commands.
 - **Upstream DNS Resolution**:
   - Forwards unresolved queries to AdGuard DNS (`94.140.14.14`) or any other upstream server.
 - **Dynamic Updates**:
@@ -50,15 +53,18 @@ This project implements a lightweight DNS server that runs on the Raspberry Pi P
    mput src/main.py
    ```
 
-3. **Create a Blocklist File**:
-   Add a file named `blocklist.txt` on the Pico W with domains to block.
-
-   ```plaintext
-   # Example blocklist
-   ads.google.com
-   doubleclick.net
-   adservice.google.com
-   ```
+3. **Create Supporting Files**:
+   - **Blocklist File**: Add a file named `blocklist.txt` on the Pico W with domains to block.
+     ```plaintext
+     # Example blocklist
+     ads.google.com
+     doubleclick.net
+     adservice.google.com
+     ```
+   - **DNS Cache File**: Add an empty `dns_cache.json` file to the root directory.
+     ```json
+     {}
+     ```
 
 ---
 
@@ -76,19 +82,21 @@ This project implements a lightweight DNS server that runs on the Raspberry Pi P
 
 ### CLI Commands
 
-| Command               | Description                                   |
-|-----------------------|-----------------------------------------------|
-| `add <domain> <ip>`   | Add a custom domain mapping.                 |
-| `remove <domain>`     | Remove a custom domain mapping.              |
-| `list_domains`        | List all custom domain mappings.             |
-| `block <domain>`      | Block a domain.                              |
-| `unblock <domain>`    | Unblock a domain.                            |
-| `list_blocked`        | List all blocked domains.                    |
-| `save_blocklist`      | Save the current blocklist to a file.        |
-| `save_domains`        | Save custom domains to a file.               |
-| `load_domains`        | Load custom domains from a file.             |
-| `start`               | Start the DNS server.                        |
-| `exit`                | Exit the CLI.                                |
+| Command                 | Description                                   |
+|-------------------------|-----------------------------------------------|
+| `add <domain> <ip>`     | Add a custom domain mapping.                  |
+| `remove <domain>`       | Remove a custom domain mapping.               |
+| `list_domains`          | List all custom domain mappings.              |
+| `block <domain>`        | Block a domain.                               |
+| `unblock <domain>`      | Unblock a domain.                             |
+| `list_blocked`          | List all blocked domains.                     |
+| `save_blocklist`        | Save the current blocklist to a file.         |
+| `save_domains`          | Save custom domains to a file.                |
+| `load_domains`          | Load custom domains from a file.              |
+| `view_cache`            | Display the current DNS cache.                |
+| `clear_cache`           | Clear all entries in the DNS cache.           |
+| `start`                 | Start the DNS server.                         |
+| `exit`                  | Exit the CLI.                                 |
 
 ---
 
@@ -102,15 +110,19 @@ This project implements a lightweight DNS server that runs on the Raspberry Pi P
    ```bash
    > block ads.google.com
    ```
-3. **List Blocked Domains**:
+3. **View Cache**:
    ```bash
-   > list_blocked
+   > view_cache
    ```
-4. **Start the DNS Server**:
+4. **Clear Cache**:
+   ```bash
+   > clear_cache
+   ```
+5. **Start the DNS Server**:
    ```bash
    > start
    ```
-5. **Exit the CLI**:
+6. **Exit the CLI**:
    ```bash
    > exit
    ```
@@ -133,6 +145,7 @@ This project implements a lightweight DNS server that runs on the Raspberry Pi P
 ### 3. Caching:
 - Recently resolved domains are stored in a cache to speed up repeated queries.
 - Cached entries expire after the specified TTL (default: 300 seconds).
+- Cache is persisted in `dns_cache.json` to survive server restarts.
 
 ---
 
@@ -163,7 +176,10 @@ This project implements a lightweight DNS server that runs on the Raspberry Pi P
 2. **Modify Blocklist**:
    - Update `blocklist.txt` or use the CLI commands.
 
-3. **Logging**:
+3. **Cache Management**:
+   - Use CLI commands (`view_cache`, `clear_cache`) to manage the DNS cache.
+
+4. **Logging**:
    - Extend the logging functionality in `dns_server.py` for more detailed logs.
 
 ---
@@ -177,6 +193,9 @@ This project implements a lightweight DNS server that runs on the Raspberry Pi P
    - Verify your blocklist and custom mappings.
    - Check the upstream DNS server configuration.
 
+3. **Cache Issues**:
+   - Ensure `dns_cache.json` exists and is writable.
+
 ---
 
 ## Disclaimer
@@ -188,5 +207,3 @@ This project is for educational purposes only. Use responsibly and only on netwo
 ## License
 
 This project is licensed under the MIT License.
-
----
