@@ -1,24 +1,27 @@
-# MicroPython DNS Server with Ad Blocking
+# MicroPython DNS Server with Ad Blocking and Caching
 
-This project implements a lightweight DNS server that runs on the Raspberry Pi Pico W using MicroPython. It features native ad blocking via a customizable blocklist and integrates with AdGuard DNS for enhanced filtering. Additionally, the server supports custom domain mappings for flexible DNS management.
+This project implements a lightweight DNS server that runs on the Raspberry Pi Pico W using MicroPython. It features native ad blocking via a customizable blocklist, integrates with AdGuard DNS for enhanced filtering, and includes a caching mechanism to improve performance by storing recently resolved queries. The server also supports custom domain mappings for flexible DNS management.
 
 ---
 
 ## Features
 
-- **DNS Server**: Listens on port 53 for DNS queries.
+- **DNS Server**:
+  - Listens on port 53 for DNS queries.
 - **Ad Blocking**:
   - Intercepts requests for domains in the blocklist and returns a local IP (e.g., `0.0.0.0`).
   - Includes a sample blocklist with known ad-serving domains.
 - **Custom Domain Mappings**:
   - Define custom IP addresses for specific domains (e.g., `example.com -> 192.168.1.100`).
+- **Caching**:
+  - Stores recently resolved domains to improve response time for repeated queries.
+  - Includes a Time-to-Live (TTL) mechanism for cache expiration.
 - **Upstream DNS Resolution**:
   - Forwards unresolved queries to AdGuard DNS (`94.140.14.14`) or any other upstream server.
 - **Dynamic Updates**:
   - Add or remove custom domains and blocklist entries at runtime via the CLI.
 
 ---
-
 
 ## Installation
 
@@ -40,193 +43,150 @@ This project implements a lightweight DNS server that runs on the Raspberry Pi P
    ```
 
 2. **Transfer Files to Pico W**:
-
-Copy the lib/ and src/ directories to your Pico W.
-
-```bash
-mpfshell
-mput lib/*
-mput src/main.py
-```
+   Copy the `lib/` and `src/` directories to your Pico W.
+   ```bash
+   mpfshell
+   mput lib/*
+   mput src/main.py
+   ```
 
 3. **Create a Blocklist File**:
+   Add a file named `blocklist.txt` on the Pico W with domains to block.
 
-Add a file named blocklist.txt on the Pico W with domains to block.
-
-
-# Example blocklist
-```bash
-ads.google.com
-doubleclick.net
-adservice.google.com
-```
-
-
+   ```plaintext
+   # Example blocklist
+   ads.google.com
+   doubleclick.net
+   adservice.google.com
+   ```
 
 ---
 
-**Usage**
+## Usage
 
-*Start the CLI*
+### Start the CLI
 
-1. *Open a serial terminal to the Pico W*.
-
-
-2. *Run main.py to access the DNS server CLI*.
-
-
-```bash
-PicoW> python src/main.py
-```
+1. Open a serial terminal to the Pico W.
+2. Run `main.py` to access the DNS server CLI:
+   ```bash
+   PicoW> python src/main.py
+   ```
 
 ---
 
-**Commands**
+### CLI Commands
 
-
----
-
-**Examples**
-
-*Add a Custom Domain Mapping*
-
-```bash
-> add example.com 192.168.1.100
-```
-
-*Block a Domain*
-
-```bash
-> block ads.google.com
-```
-
-*Unblock a Domain*
-
-```bash
-> unblock ads.google.com
-```
-
-*Start the DNS Server*
-
-```bash
-> start
-```
-
-*Exit the CLI*
-
-```bash
-> exit
-```
+| Command               | Description                                   |
+|-----------------------|-----------------------------------------------|
+| `add <domain> <ip>`   | Add a custom domain mapping.                 |
+| `remove <domain>`     | Remove a custom domain mapping.              |
+| `list_domains`        | List all custom domain mappings.             |
+| `block <domain>`      | Block a domain.                              |
+| `unblock <domain>`    | Unblock a domain.                            |
+| `list_blocked`        | List all blocked domains.                    |
+| `save_blocklist`      | Save the current blocklist to a file.        |
+| `save_domains`        | Save custom domains to a file.               |
+| `load_domains`        | Load custom domains from a file.             |
+| `start`               | Start the DNS server.                        |
+| `exit`                | Exit the CLI.                                |
 
 ---
 
-**How It Works**
+### Examples
 
-1. *DNS Query Handling*:
-
-Incoming DNS queries are parsed to extract the domain name.
-
-The server checks:
-
-1. *Blocklist: If the domain is blocked, 0.0.0.0 is returned*.
-
-
-2. *Custom Resolver: If a custom mapping exists, the corresponding IP is returned*.
-
-
-3. *Upstream DNS: If unresolved, the query is forwarded to AdGuard DNS*.
-
-
-
-
-
-2. *Ad Blocking*:
-
-Requests to ad-serving domains in the blocklist are intercepted and resolved to 0.0.0.0, preventing ads from being served.
-
-
-
-
+1. **Add a Custom Domain Mapping**:
+   ```bash
+   > add example.com 192.168.1.100
+   ```
+2. **Block a Domain**:
+   ```bash
+   > block ads.google.com
+   ```
+3. **List Blocked Domains**:
+   ```bash
+   > list_blocked
+   ```
+4. **Start the DNS Server**:
+   ```bash
+   > start
+   ```
+5. **Exit the CLI**:
+   ```bash
+   > exit
+   ```
 
 ---
 
-**Blocklist Management**
+## How It Works
 
-*Default Blocklist*:
+### 1. DNS Query Handling:
+- **Incoming DNS queries** are parsed to extract the domain name.
+- The server checks:
+  1. **Cache**: If the domain is cached and valid, the cached response is returned.
+  2. **Blocklist**: If the domain is blocked, `0.0.0.0` is returned.
+  3. **Custom Resolver**: If a custom mapping exists, the corresponding IP is returned.
+  4. **Upstream DNS**: If unresolved, the query is forwarded to AdGuard DNS.
 
-Add domains to blocklist.txt for ad blocking.
+### 2. Ad Blocking:
+- Requests to ad-serving domains in the blocklist are intercepted and resolved to `0.0.0.0`, preventing ads from being served.
 
-*Example*:
-
-```bash
-ads.google.com
-doubleclick.net
-adservice.google.com
-```
-
-**Dynamic Updates**:
-
-Use the block and unblock commands in the CLI to modify the blocklist at runtime.
-
-
-
+### 3. Caching:
+- Recently resolved domains are stored in a cache to speed up repeated queries.
+- Cached entries expire after the specified TTL (default: 300 seconds).
 
 ---
 
-**Customization**
+## Blocklist Management
 
-1. *Change Upstream DNS*:
+### Default Blocklist:
+- Add domains to `blocklist.txt` for ad blocking.
+- Example:
+  ```plaintext
+  ads.google.com
+  doubleclick.net
+  adservice.google.com
+  ```
 
-```bash
-Edit the UPSTREAM_DNS variable in dns_server.py to use a different DNS server.
-
-UPSTREAM_DNS = "8.8.8.8"  # Google DNS
-```
-
-
-2. *Modify Blocklist*:
-
-Update blocklist.txt or use the CLI commands.
-
-
-
-3. *Logging*:
-
-Extend the logging functionality in dns_server.py for more detailed logs.
-
-
-
-
+### Dynamic Updates:
+- Use the `block` and `unblock` commands in the CLI to modify the blocklist at runtime.
 
 ---
 
-**Troubleshooting**
+## Customization
 
-1. *Port 53 Binding Error*:
+1. **Change Upstream DNS**:
+   - Edit the `UPSTREAM_DNS` variable in `dns_server.py`:
+     ```python
+     UPSTREAM_DNS = "8.8.8.8"  # Google DNS
+     ```
 
-Ensure no other services are using port 53.
+2. **Modify Blocklist**:
+   - Update `blocklist.txt` or use the CLI commands.
 
-
-
-2. *DNS Not Resolving*:
-
-Verify your blocklist and custom mappings.
-
-Check the upstream DNS server configuration.
-
-
-
-
+3. **Logging**:
+   - Extend the logging functionality in `dns_server.py` for more detailed logs.
 
 ---
 
-**Disclaimer**
-```bash
+## Troubleshooting
+
+1. **Port 53 Binding Error**:
+   - Ensure no other services are using port 53.
+
+2. **DNS Not Resolving**:
+   - Verify your blocklist and custom mappings.
+   - Check the upstream DNS server configuration.
+
+---
+
+## Disclaimer
+
 This project is for educational purposes only. Use responsibly and only on networks you own or have explicit permission to operate on.
-```
 
 ---
 
-**License**
+## License
 
 This project is licensed under the MIT License.
+
+---
