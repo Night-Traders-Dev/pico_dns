@@ -1,3 +1,5 @@
+import sys
+sys.path.append('../lib')
 from custom_resolver import add_custom_domain, remove_custom_domain
 from blocklist import load_blocklist, add_to_blocklist, remove_from_blocklist
 from dns_server import start_dns_server
